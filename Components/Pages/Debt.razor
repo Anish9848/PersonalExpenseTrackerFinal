@@ -45,8 +45,12 @@
                         <input id="amount" @bind="NewDebtAmount" type="number" class="form-control" />
                     </div>
                     <div class="mb-3">
-                        <label for="dueDate" class="form-label">Due Date</label>
-                        <input id="dueDate" @bind="NewDueDate" type="date" class="form-control" />
+                        <label for="takenDate" class="form-label">Debt Taken Date</label>
+                        <input id="takenDate" @bind="NewDebtTakenDate" type="date" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dueDate" class="form-label">Debt Due Date</label>
+                        <input id="dueDate" @bind="NewDebtDueDate" type="date" class="form-control" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -70,8 +74,12 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="filterDate" class="form-label">Select Debt Taken Date</label>
-                        <input type="month" id="filterDate" @bind="FilterDate" class="form-control" />
+                        <label for="filterStartDate" class="form-label">Start Date</label>
+                        <input type="date" id="filterStartDate" @bind="FilterStartDate" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="filterEndDate" class="form-label">End Date</label>
+                        <input type="date" id="filterEndDate" @bind="FilterEndDate" class="form-control" />
                     </div>
                     <div class="mb-3">
                         <label for="filterStatus" class="form-label">Select Status</label>
@@ -147,52 +155,29 @@
                 <td>
                     <button @onclick="() => EditDebt(debt.debt)" class="btn btn-success btn-sm">Edit</button>
                     <button @onclick="() => ShowPayDebtPopup(debt.debt)" class="btn btn-primary btn-sm">Pay</button>
-                    <button @onclick="() => ConfirmDelete(debt.debt)" class="btn btn-danger btn-sm">Delete</button>
                 </td>
             </tr>
         }
     </tbody>
 </table>
 
-<!-- Confirmation Modal for Deleting Debt -->
-@if (ShowDeleteConfirmation)
-{
-    <div class="modal show d-block" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Deletion</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete the debt "<strong>@DebtToDelete?.DebtSource</strong>"?</p>
-                </div>
-                <div class="modal-footer">
-                    <button @onclick="DeleteDebt" class="btn btn-danger">Delete</button>
-                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     private List<Debtitem> Debts = new();
     private List<Debtitem> FilteredDebts = new();
     private string NewSource = string.Empty;
     private decimal NewDebtAmount;
-    private DateTime NewDueDate = DateTime.Now;
+    private DateTime NewDebtTakenDate = DateTime.Now;
+    private DateTime NewDebtDueDate = DateTime.Now;
     private bool ShowForm = false;
     private bool ShowPayPopup = false;
     private bool ShowFilterPopup = false;
-    private bool ShowDeleteConfirmation = false;
     private Debtitem? DebtToEdit;
     private Debtitem? DebtToPay;
-    private Debtitem? DebtToDelete;
     private decimal PayAmount;
     private string? WarningMessage;
     private string? PayWarningMessage;
-    private DateTime? FilterDate;
+    private DateTime? FilterStartDate;
+    private DateTime? FilterEndDate;
     private string FilterStatus = string.Empty;
     private string SearchSource = string.Empty;
 
@@ -228,7 +213,7 @@
     private void AddOrUpdateDebt()
     {
         // Check if any required fields are empty
-        if (string.IsNullOrEmpty(NewSource) || NewDebtAmount <= 0 || NewDueDate == default)
+        if (string.IsNullOrEmpty(NewSource) || NewDebtAmount <= 0 || NewDebtTakenDate == default || NewDebtDueDate == default)
         {
             WarningMessage = "Please fill in all fields!";
             return;
@@ -241,8 +226,8 @@
                 {
                     DebtSource = NewSource,
                     DebtAmount = NewDebtAmount,
-                    DebtDueDate = NewDueDate,
-                    DebtTakenDate = NewDueDate, // Set DebtTakenDate to the same as DebtDueDate
+                    DebtDueDate = NewDebtDueDate,
+                    DebtTakenDate = NewDebtTakenDate,
                     Status = "Pending"
                 });
         }
@@ -251,8 +236,8 @@
             // Update existing debt
             DebtToEdit.DebtSource = NewSource;
             DebtToEdit.DebtAmount = NewDebtAmount;
-            DebtToEdit.DebtDueDate = NewDueDate;
-            DebtToEdit.DebtTakenDate = NewDueDate; // Set DebtTakenDate to the same as DebtDueDate
+            DebtToEdit.DebtDueDate = NewDebtDueDate;
+            DebtToEdit.DebtTakenDate = NewDebtTakenDate;
             DebtToEdit.Status = "Pending";
             DebtService.UpdateDebt(DebtToEdit);
             DebtToEdit = null;
@@ -269,7 +254,8 @@
         DebtToEdit = debt;
         NewSource = debt.DebtSource;
         NewDebtAmount = debt.DebtAmount;
-        NewDueDate = debt.DebtDueDate;
+        NewDebtTakenDate = debt.DebtTakenDate;
+        NewDebtDueDate = debt.DebtDueDate;
         ShowForm = true;
     }
 
@@ -304,29 +290,6 @@
         }
     }
 
-    private void ConfirmDelete(Debtitem debt)
-    {
-        DebtToDelete = debt;
-        ShowDeleteConfirmation = true;
-    }
-
-    private void DeleteDebt()
-    {
-        if (DebtToDelete != null)
-        {
-            DebtService.DeleteDebt(DebtToDelete.DebtId);
-            LoadDebts();
-            ShowDeleteConfirmation = false;
-            DebtToDelete = null;
-        }
-    }
-
-    private void CancelDelete()
-    {
-        ShowDeleteConfirmation = false;
-        DebtToDelete = null;
-    }
-
     private void LoadDebts()
     {
         Debts = DebtService.GetDebts();
@@ -337,7 +300,8 @@
     {
         NewSource = string.Empty;
         NewDebtAmount = 0;
-        NewDueDate = DateTime.Now;
+        NewDebtTakenDate = DateTime.Now;
+        NewDebtDueDate = DateTime.Now;
         DebtToEdit = null;
         WarningMessage = string.Empty;
     }
@@ -346,9 +310,9 @@
     {
         FilteredDebts = Debts;
 
-        if (FilterDate.HasValue)
+        if (FilterStartDate.HasValue && FilterEndDate.HasValue)
         {
-            FilteredDebts = FilteredDebts.Where(d => d.DebtTakenDate.Month == FilterDate.Value.Month && d.DebtTakenDate.Year == FilterDate.Value.Year).ToList();
+            FilteredDebts = FilteredDebts.Where(d => d.DebtTakenDate >= FilterStartDate.Value && d.DebtTakenDate <= FilterEndDate.Value).ToList();
         }
 
         if (!string.IsNullOrEmpty(FilterStatus))
@@ -361,7 +325,8 @@
 
     private void ClearFilter()
     {
-        FilterDate = null;
+        FilterStartDate = null;
+        FilterEndDate = null;
         FilterStatus = string.Empty;
         FilteredDebts = Debts;
     }
