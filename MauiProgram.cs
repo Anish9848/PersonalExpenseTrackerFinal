@@ -58,7 +58,8 @@ namespace PersonalExpenseTracker
 
             builder.Services.AddSingleton<TransactionService>();
             builder.Services.AddSingleton<TagService>();
-            builder.Services.AddSingleton<DebtService>(); // Register DebtService
+            builder.Services.AddSingleton<DebtService>();
+            builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

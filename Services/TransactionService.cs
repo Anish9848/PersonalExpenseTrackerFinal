@@ -2,6 +2,7 @@
 using PersonalExpenseTracker.Models;
 using System.Collections.Generic;
 
+
 namespace PersonalExpenseTracker.Services
 {
     public class TransactionService
@@ -30,7 +31,7 @@ namespace PersonalExpenseTracker.Services
                         transactionAmount = reader.GetDecimal(3),
                         transactionDate = reader.GetDateTime(4),
                         transactionTag = reader.GetString(5),
-                        transactionType = reader.GetString(6) // Ensure that transactionType is correctly mapped
+                        transactionType = reader.GetString(6)
                     });
                 }
             }
@@ -48,7 +49,7 @@ namespace PersonalExpenseTracker.Services
             command.Parameters.AddWithValue("$amount", transaction.transactionAmount);
             command.Parameters.AddWithValue("$date", transaction.transactionDate);
             command.Parameters.AddWithValue("$tag", transaction.transactionTag);
-            command.Parameters.AddWithValue("$type", transaction.transactionType); // Add transactionType here
+            command.Parameters.AddWithValue("$type", transaction.transactionType);
             command.ExecuteNonQuery();
         }
 
@@ -64,7 +65,7 @@ namespace PersonalExpenseTracker.Services
             command.Parameters.AddWithValue("$amount", transaction.transactionAmount);
             command.Parameters.AddWithValue("$date", transaction.transactionDate);
             command.Parameters.AddWithValue("$tag", transaction.transactionTag);
-            command.Parameters.AddWithValue("$type", transaction.transactionType); // Add transactionType here
+            command.Parameters.AddWithValue("$type", transaction.transactionType);
             command.Parameters.AddWithValue("$id", transaction.transactionId);
             command.ExecuteNonQuery();
         }
@@ -77,6 +78,24 @@ namespace PersonalExpenseTracker.Services
                 WHERE transactionId = $id";
             command.Parameters.AddWithValue("$id", id);
             command.ExecuteNonQuery();
+        }
+
+        // New method to fetch transactionType and transactionAmount
+        public List<(string transactionType, decimal transactionAmount)> GetTransactionTypesAndAmounts()
+        {
+            var result = new List<(string transactionType, decimal transactionAmount)>();
+            var command = _dbConnection.CreateCommand();
+            command.CommandText = "SELECT transactionType, transactionAmount FROM Transactions";
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var transactionType = reader.GetString(0);
+                    var transactionAmount = reader.GetDecimal(1);
+                    result.Add((transactionType, transactionAmount));
+                }
+            }
+            return result;
         }
     }
 }

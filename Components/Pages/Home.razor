@@ -1,5 +1,129 @@
 ﻿@page "/"
+@using PersonalExpenseTracker.Models
+@inject PersonalExpenseTracker.Services.TransactionService TransactionService
+@inject PersonalExpenseTracker.Services.DebtService DebtService
+@using MudBlazor
 
-<h1>Hello, world!</h1>
+<h1>Dashboard</h1>
 
-Welcome to your new app.
+<!-- Income and Expense Summary -->
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <span>Total Income: @TotalIncome</span>
+    <span>Total Expense: @TotalExpense</span>
+    <span>Remaining Balance: @RemainingBalance</span>
+</div>
+
+<!-- Highest and Lowest Income -->
+<div class="alert alert-success d-flex justify-content-between align-items-center">
+    <span>Highest Income: @HighestIncome</span>
+    <span>Lowest Income: @LowestIncome</span>
+</div>
+
+<!-- Highest and Lowest Expense -->
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+    <span>Highest Expense: @HighestExpense</span>
+    <span>Lowest Expense: @LowestExpense</span>
+</div>
+
+<!-- Debt Summary -->
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <span>Total Debt: @TotalDebt</span>
+    <span>Cleared Debt: @ClearedDebt</span>
+    <span>Remaining Debt: @RemainingDebt</span>
+</div>
+
+<!-- Highest and Lowest Debt -->
+<div class="alert alert-danger d-flex justify-content-between align-items-center">
+    <span>Highest Debt: @HighestDebt</span>
+    <span>Lowest Debt: @LowestDebt</span>
+</div>
+
+<!-- Income, Expense & Debt Chart -->
+<div class="col-md-6">
+    <div class="dashboard-card bg-blue text-white text-center">
+        <h3>Income, Expense & Debt Chart</h3>
+        <MudPaper Class="pa-4">
+            <MudChart ChartType="ChartType.Pie" InputData="@chartData" InputLabels="@chartLabels" Width="300px" Height="300px" />
+        </MudPaper>
+    </div>
+</div>
+
+@code {
+    private decimal TotalIncome = 0;
+    private decimal TotalExpense = 0;
+    private decimal RemainingBalance = 0;
+    private decimal HighestIncome = 0;
+    private decimal LowestIncome = 0;
+    private decimal HighestExpense = 0;
+    private decimal LowestExpense = 0;
+    private decimal TotalDebt = 0;
+    private decimal ClearedDebt = 0;
+    private decimal RemainingDebt = 0;
+    private decimal HighestDebt = 0;
+    private decimal LowestDebt = 0;
+
+    private double[] chartData;
+    private string[] chartLabels = { "Income", "Expense", "Total Debt" };
+
+    protected override void OnInitialized()
+    {
+        LoadTransactions();
+        LoadDebts();
+    }
+
+    private void LoadTransactions()
+    {
+        var transactions = TransactionService.GetTransactions();
+        CalculateTransactionTotals(transactions);
+    }
+
+    private void LoadDebts()
+    {
+        var debts = DebtService.GetDebts();
+        CalculateDebtTotals(debts);
+    }
+
+    private void CalculateTransactionTotals(List<Transactionitem> transactions)
+    {
+        TotalIncome = transactions.Where(t => t.transactionType == "Income").Sum(t => t.transactionAmount);
+        TotalExpense = transactions.Where(t => t.transactionType == "Expense").Sum(t => t.transactionAmount);
+        RemainingBalance = TotalIncome - TotalExpense;
+
+        var incomes = transactions.Where(t => t.transactionType == "Income").Select(t => t.transactionAmount).ToList();
+        if (incomes.Any())
+        {
+            HighestIncome = incomes.Max();
+            LowestIncome = incomes.Min();
+        }
+
+        var expenses = transactions.Where(t => t.transactionType == "Expense").Select(t => t.transactionAmount).ToList();
+        if (expenses.Any())
+        {
+            HighestExpense = expenses.Max();
+            LowestExpense = expenses.Min();
+        }
+
+        UpdateChartData();
+    }
+
+    private void CalculateDebtTotals(List<Debtitem> debts)
+    {
+        TotalDebt = debts.Sum(d => d.DebtAmount);
+        ClearedDebt = debts.Where(d => d.Status == "Paid").Sum(d => d.DebtAmount);
+        RemainingDebt = TotalDebt - ClearedDebt;
+
+        var debtAmounts = debts.Select(d => d.DebtAmount).ToList();
+        if (debtAmounts.Any())
+        {
+            HighestDebt = debtAmounts.Max();
+            LowestDebt = debtAmounts.Min();
+        }
+
+        UpdateChartData();
+    }
+
+    private void UpdateChartData()
+    {
+        chartData = new double[] { (double)TotalIncome, (double)TotalExpense, (double)TotalDebt };
+    }
+}
