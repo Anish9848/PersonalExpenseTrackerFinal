@@ -12,7 +12,7 @@ namespace PersonalExpenseTracker.Models
         public string DebtSource { get; set; }
         public decimal DebtAmount { get; set; }
         public DateTime DebtDueDate { get; set; }
-        public DateTime DebtTakenDate { get; set; } // New field for the date the debt was taken
-        public string Status { get; set; } = "Pending"; // Status is always "Pending"
+        public DateTime DebtTakenDate { get; set; }
+        public string Status { get; set; } = "Pending"; // Default status is "Pending"
     }
 }

@@ -41,7 +41,15 @@ namespace PersonalExpenseTracker
                         transactionAmount REAL,
                         transactionDate TEXT,
                         transactionTag TEXT,
-                        transactionType TEXT  
+                        transactionType TEXT
+                    );
+                    CREATE TABLE IF NOT EXISTS Debts (
+                        DebtId INTEGER PRIMARY KEY AUTOINCREMENT,
+                        DebtSource TEXT NOT NULL,
+                        DebtAmount REAL,
+                        DebtDueDate TEXT,
+                        DebtTakenDate TEXT,
+                        Status TEXT
                     )";
                 command.ExecuteNonQuery();
 
@@ -50,6 +58,7 @@ namespace PersonalExpenseTracker
 
             builder.Services.AddSingleton<TransactionService>();
             builder.Services.AddSingleton<TagService>();
+            builder.Services.AddSingleton<DebtService>(); // Register DebtService
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

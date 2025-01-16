@@ -88,7 +88,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Filter by Date</h5>
+                    <h5 class="modal-title">Filter Transactions</h5>
                     <button type="button" class="btn-close" @onclick="ToggleFilterPopup"></button>
                 </div>
                 <div class="modal-body">
@@ -96,9 +96,28 @@
                         <label for="filterDate" class="form-label">Select Date</label>
                         <input type="date" id="filterDate" @bind="FilterDate" class="form-control" />
                     </div>
+                    <div class="mb-3">
+                        <label for="filterType" class="form-label">Select Type</label>
+                        <select id="filterType" @bind="FilterType" class="form-control">
+                            <option value="">All</option>
+                            <option value="Expense">Expense</option>
+                            <option value="Income">Income</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filterTag" class="form-label">Select Tag</label>
+                        <select id="filterTag" @bind="FilterTag" class="form-control">
+                            <option value="">All</option>
+                            @foreach (var tag in Tags)
+                            {
+                                <option value="@tag.TagName">@tag.TagName</option>
+                            }
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button @onclick="FilterTransactions" class="btn btn-primary">Apply Filter</button>
+                    <button @onclick="ClearFilter" class="btn btn-secondary">Clear</button>
                     <button type="button" class="btn btn-secondary" @onclick="ToggleFilterPopup">Close</button>
                 </div>
             </div>
@@ -179,6 +198,8 @@
     private List<Transactionitem> FilteredTransactions = new();
     private List<Tagitem> Tags = new();
     private DateTime? FilterDate;
+    private string FilterType = string.Empty;
+    private string FilterTag = string.Empty;
     private string SearchTitle = string.Empty;
 
     protected override void OnInitialized()
@@ -302,17 +323,32 @@
 
     private void FilterTransactions()
     {
+        FilteredTransactions = Transactions;
+
         if (FilterDate.HasValue)
         {
-            var exactDateMatches = Transactions.Where(t => t.transactionDate.Date == FilterDate.Value.Date).ToList();
-            var monthMatches = Transactions.Where(t => t.transactionDate.Month == FilterDate.Value.Month && t.transactionDate.Year == FilterDate.Value.Year && t.transactionDate.Date != FilterDate.Value.Date).ToList();
-            FilteredTransactions = exactDateMatches.Concat(monthMatches).ToList();
+            FilteredTransactions = FilteredTransactions.Where(t => t.transactionDate.Date == FilterDate.Value.Date).ToList();
         }
-        else
+
+        if (!string.IsNullOrEmpty(FilterType))
         {
-            FilteredTransactions = Transactions;
+            FilteredTransactions = FilteredTransactions.Where(t => t.transactionType == FilterType).ToList();
         }
+
+        if (!string.IsNullOrEmpty(FilterTag))
+        {
+            FilteredTransactions = FilteredTransactions.Where(t => t.transactionTag == FilterTag).ToList();
+        }
+
         ShowFilterPopup = false; // Close the filter popup after applying the filter
+    }
+
+    private void ClearFilter()
+    {
+        FilterDate = null;
+        FilterType = string.Empty;
+        FilterTag = string.Empty;
+        FilteredTransactions = Transactions;
     }
 
     private void SearchTransactions(ChangeEventArgs e)

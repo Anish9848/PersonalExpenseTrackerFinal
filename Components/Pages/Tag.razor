@@ -9,6 +9,11 @@
     Add Tag
 </button>
 
+<!-- Search Bar -->
+<div class="d-flex justify-content-end mb-3">
+    <input type="text" @bind="SearchTagName" @oninput="SearchTags" class="form-control w-25" placeholder="Search by Name" />
+</div>
+
 <!-- Modal for Add Tag -->
 @if (ShowForm)
 {
@@ -74,7 +79,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var tag in Tags.Select((tag, index) => new { tag, index }))
+        @foreach (var tag in FilteredTags.Select((tag, index) => new { tag, index }))
         {
             <tr>
                 <td>@(tag.index + 1)</td>
@@ -95,7 +100,9 @@
     private Tagitem? TagToEdit;
     private Tagitem? TagToDelete; // Tag selected for deletion
     private List<Tagitem> Tags = new();
+    private List<Tagitem> FilteredTags = new(); // List to store filtered tags
     private bool IsTagNameEmpty = false; // Flag to check if tag name is empty
+    private string SearchTagName = string.Empty; // Search term for filtering tags
 
     protected override void OnInitialized()
     {
@@ -108,13 +115,13 @@
         if (!ShowForm)
         {
             ClearForm();
-            IsTagNameEmpty = false; // Reset the warning message
         }
     }
 
     private void LoadTags()
     {
         Tags = TagService.GetTags();
+        FilteredTags = Tags; // Initialize FilteredTags
     }
 
     private void AddOrUpdateTag()
@@ -183,5 +190,18 @@
     {
         NewTagName = string.Empty;
         TagToEdit = null;
+    }
+
+    private void SearchTags(ChangeEventArgs e)
+    {
+        SearchTagName = e.Value.ToString();
+        if (!string.IsNullOrEmpty(SearchTagName))
+        {
+            FilteredTags = Tags.Where(t => t.TagName.Contains(SearchTagName, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+        else
+        {
+            FilteredTags = Tags;
+        }
     }
 }
