@@ -17,7 +17,7 @@ namespace PersonalExpenseTracker.Services
         {
             var transactions = new List<Transactionitem>();
             var command = _dbConnection.CreateCommand();
-            command.CommandText = "SELECT transactionId, transactionTitle, transactionDescription, transactionAmount, transactionDate, transactionTag FROM Transactions";
+            command.CommandText = "SELECT transactionId, transactionTitle, transactionDescription, transactionAmount, transactionDate, transactionTag, transactionType FROM Transactions";
             using (var reader = command.ExecuteReader())
             {
                 while (reader.Read())
@@ -29,7 +29,8 @@ namespace PersonalExpenseTracker.Services
                         transactionDescription = reader.GetString(2),
                         transactionAmount = reader.GetDecimal(3),
                         transactionDate = reader.GetDateTime(4),
-                        transactionTag = reader.GetString(5)
+                        transactionTag = reader.GetString(5),
+                        transactionType = reader.GetString(6) // Ensure that transactionType is correctly mapped
                     });
                 }
             }
@@ -40,13 +41,14 @@ namespace PersonalExpenseTracker.Services
         {
             var command = _dbConnection.CreateCommand();
             command.CommandText = @"
-                INSERT INTO Transactions (transactionTitle, transactionDescription, transactionAmount, transactionDate, transactionTag)
-                VALUES ($title, $description, $amount, $date, $tag)";
+                INSERT INTO Transactions (transactionTitle, transactionDescription, transactionAmount, transactionDate, transactionTag, transactionType)
+                VALUES ($title, $description, $amount, $date, $tag, $type)";
             command.Parameters.AddWithValue("$title", transaction.transactionTitle);
             command.Parameters.AddWithValue("$description", transaction.transactionDescription);
             command.Parameters.AddWithValue("$amount", transaction.transactionAmount);
             command.Parameters.AddWithValue("$date", transaction.transactionDate);
             command.Parameters.AddWithValue("$tag", transaction.transactionTag);
+            command.Parameters.AddWithValue("$type", transaction.transactionType); // Add transactionType here
             command.ExecuteNonQuery();
         }
 
@@ -55,13 +57,14 @@ namespace PersonalExpenseTracker.Services
             var command = _dbConnection.CreateCommand();
             command.CommandText = @"
                 UPDATE Transactions
-                SET transactionTitle = $title, transactionDescription = $description, transactionAmount = $amount, transactionDate = $date, transactionTag = $tag
+                SET transactionTitle = $title, transactionDescription = $description, transactionAmount = $amount, transactionDate = $date, transactionTag = $tag, transactionType = $type
                 WHERE transactionId = $id";
             command.Parameters.AddWithValue("$title", transaction.transactionTitle);
             command.Parameters.AddWithValue("$description", transaction.transactionDescription);
             command.Parameters.AddWithValue("$amount", transaction.transactionAmount);
             command.Parameters.AddWithValue("$date", transaction.transactionDate);
             command.Parameters.AddWithValue("$tag", transaction.transactionTag);
+            command.Parameters.AddWithValue("$type", transaction.transactionType); // Add transactionType here
             command.Parameters.AddWithValue("$id", transaction.transactionId);
             command.ExecuteNonQuery();
         }

@@ -14,5 +14,6 @@ namespace PersonalExpenseTracker.Models
         public decimal transactionAmount { get; set; }
         public DateTime transactionDate { get; set; }
         public string transactionTag { get; set; }  // Add Tag (or you can use a Tag ID reference)
+        public string transactionType { get; set; }
     }
 }

@@ -47,6 +47,14 @@
                             }
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Type</label>
+                        <select id="type" @bind="NewTransactionType" class="form-control">
+                            <option value="">Select a type</option>
+                            <option value="Expense">Expense</option>
+                            <option value="Income">Income</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button @onclick="AddOrUpdateTransaction" class="btn btn-primary">@((TransactionToEdit == null) ? "Add Transaction" : "Update Transaction")</button>
@@ -67,6 +75,7 @@
             <th>Amount</th>
             <th>Date</th>
             <th>Tag</th>
+            <th>Type</th> <!-- Add this line -->
             <th>Actions</th>
         </tr>
     </thead>
@@ -80,6 +89,7 @@
                 <td>@transaction.transaction.transactionAmount</td>
                 <td>@transaction.transaction.transactionDate.ToShortDateString()</td>
                 <td>@transaction.transaction.transactionTag</td>
+                <td>@transaction.transaction.transactionType</td> <!-- Add this line -->
                 <td>
                     <button @onclick="() => EditTransaction(transaction.transaction)" class="btn btn-success btn-sm">Edit</button>
                     <button @onclick="() => ConfirmDelete(transaction.transaction)" class="btn btn-danger btn-sm">Delete</button>
@@ -125,6 +135,7 @@
     private decimal NewTransactionAmount;
     private DateTime NewTransactionDate = DateTime.Now;
     private string NewTransactionTag = string.Empty;
+    private string NewTransactionType = string.Empty;  // Add NewTransactionType
     private bool ShowForm = false;
     private bool ShowDeleteConfirmation = false;
     private Transactionitem? TransactionToEdit;
@@ -161,7 +172,7 @@
     private void AddOrUpdateTransaction()
     {
         // Check if any required fields are empty
-        if (string.IsNullOrEmpty(NewTransactionTitle) || string.IsNullOrEmpty(NewTransactionDescription) || NewTransactionAmount <= 0 || string.IsNullOrEmpty(NewTransactionTag))
+        if (string.IsNullOrEmpty(NewTransactionTitle) || string.IsNullOrEmpty(NewTransactionDescription) || NewTransactionAmount <= 0 || string.IsNullOrEmpty(NewTransactionTag) || string.IsNullOrEmpty(NewTransactionType))
         {
             WarningMessage = "Please fill in all fields correctly!";
             return;
@@ -176,7 +187,8 @@
                     transactionDescription = NewTransactionDescription,
                     transactionAmount = NewTransactionAmount,
                     transactionDate = NewTransactionDate,
-                    transactionTag = NewTransactionTag
+                    transactionTag = NewTransactionTag,
+                    transactionType = NewTransactionType  // Add transactionType
                 });
         }
         else
@@ -187,6 +199,7 @@
             TransactionToEdit.transactionAmount = NewTransactionAmount;
             TransactionToEdit.transactionDate = NewTransactionDate;
             TransactionToEdit.transactionTag = NewTransactionTag;
+            TransactionToEdit.transactionType = NewTransactionType;  // Add transactionType
             TransactionService.UpdateTransaction(TransactionToEdit);
             TransactionToEdit = null;
         }
@@ -205,6 +218,7 @@
         NewTransactionAmount = transaction.transactionAmount;
         NewTransactionDate = transaction.transactionDate;
         NewTransactionTag = transaction.transactionTag;
+        NewTransactionType = transaction.transactionType;  // Add transactionType
         ShowForm = true;
     }
 
@@ -251,6 +265,7 @@
         NewTransactionAmount = 0;
         NewTransactionDate = DateTime.Now;
         NewTransactionTag = string.Empty;
+        NewTransactionType = string.Empty;  // Add NewTransactionType
         TransactionToEdit = null;
         WarningMessage = string.Empty;
     }
