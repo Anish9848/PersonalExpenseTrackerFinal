@@ -1,0 +1,257 @@
+﻿@page "/transaction"
+@using PersonalExpenseTracker.Models
+@inject PersonalExpenseTracker.Services.TransactionService TransactionService
+@inject PersonalExpenseTracker.Services.TagService TagService
+
+<h1>Transactions</h1>
+
+<!-- Button to Toggle the Add Transaction Form -->
+<button @onclick="ToggleFormVisibility" class="btn btn-primary add-tag-button position-fixed bottom-0 end-0 m-3">
+    Add Tag
+</button>
+
+<!-- Modal for Add Transactions -->
+@if (ShowForm)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@((TransactionToEdit == null) ? "Add Transaction" : "Edit Transaction")</h5>
+                    <button type="button" class="btn-close" @onclick="ToggleFormVisibility"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input id="title" @bind="NewTransactionTitle" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input id="description" @bind="NewTransactionDescription" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input id="amount" @bind="NewTransactionAmount" type="number" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input id="date" @bind="NewTransactionDate" type="date" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="tag" class="form-label">Tag</label>
+                        <select id="tag" @bind="NewTransactionTag" class="form-control">
+                            <option value="">Select a tag</option>
+                            @foreach (var tag in Tags)
+                            {
+                                <option value="@tag.TagName">@tag.TagName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="AddOrUpdateTransaction" class="btn btn-primary">@((TransactionToEdit == null) ? "Add Transaction" : "Update Transaction")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="ToggleFormVisibility">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Transaction Table -->
+<table class="table table-striped mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>S.No.</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Tag</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var transaction in Transactions.Select((transaction, index) => new { transaction, index }))
+        {
+            <tr>
+                <td>@(transaction.index + 1)</td>
+                <td>@transaction.transaction.transactionTitle</td>
+                <td>@transaction.transaction.transactionDescription</td>
+                <td>@transaction.transaction.transactionAmount</td>
+                <td>@transaction.transaction.transactionDate.ToShortDateString()</td>
+                <td>@transaction.transaction.transactionTag</td>
+                <td>
+                    <button @onclick="() => EditTransaction(transaction.transaction)" class="btn btn-success btn-sm">Edit</button>
+                    <button @onclick="() => ConfirmDelete(transaction.transaction)" class="btn btn-danger btn-sm">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Confirmation Modal for Deleting Transaction -->
+@if (ShowDeleteConfirmation)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the transaction "<strong>@TransactionToDelete?.transactionTitle</strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="DeleteTransaction" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Warning Message for Deletion -->
+@if (!string.IsNullOrEmpty(WarningMessage))
+{
+    <div class="alert alert-warning mt-3">
+        @WarningMessage
+    </div>
+}
+
+@code {
+    private string NewTransactionTitle = string.Empty;
+    private string NewTransactionDescription = string.Empty;
+    private decimal NewTransactionAmount;
+    private DateTime NewTransactionDate = DateTime.Now;
+    private string NewTransactionTag = string.Empty;
+    private bool ShowForm = false;
+    private bool ShowDeleteConfirmation = false;
+    private Transactionitem? TransactionToEdit;
+    private Transactionitem? TransactionToDelete;
+    private string? WarningMessage;
+    private List<Transactionitem> Transactions = new();
+    private List<Tagitem> Tags = new();
+
+    protected override void OnInitialized()
+    {
+        LoadTransactions();
+        LoadTags();
+    }
+
+    private void ToggleFormVisibility()
+    {
+        ShowForm = !ShowForm;
+        if (!ShowForm)
+        {
+            ClearForm();
+        }
+    }
+
+    private void LoadTransactions()
+    {
+        Transactions = TransactionService.GetTransactions();
+    }
+
+    private void LoadTags()
+    {
+        Tags = TagService.GetTags();
+    }
+
+    private void AddOrUpdateTransaction()
+    {
+        // Check if any required fields are empty
+        if (string.IsNullOrEmpty(NewTransactionTitle) || string.IsNullOrEmpty(NewTransactionDescription) || NewTransactionAmount <= 0 || string.IsNullOrEmpty(NewTransactionTag))
+        {
+            WarningMessage = "Please fill in all fields correctly!";
+            return;
+        }
+
+        if (TransactionToEdit == null)
+        {
+            // Add a new transaction
+            TransactionService.AddTransaction(new Transactionitem
+                {
+                    transactionTitle = NewTransactionTitle,
+                    transactionDescription = NewTransactionDescription,
+                    transactionAmount = NewTransactionAmount,
+                    transactionDate = NewTransactionDate,
+                    transactionTag = NewTransactionTag
+                });
+        }
+        else
+        {
+            // Update existing transaction
+            TransactionToEdit.transactionTitle = NewTransactionTitle;
+            TransactionToEdit.transactionDescription = NewTransactionDescription;
+            TransactionToEdit.transactionAmount = NewTransactionAmount;
+            TransactionToEdit.transactionDate = NewTransactionDate;
+            TransactionToEdit.transactionTag = NewTransactionTag;
+            TransactionService.UpdateTransaction(TransactionToEdit);
+            TransactionToEdit = null;
+        }
+
+        LoadTransactions();
+        ClearForm();
+        ShowForm = false;
+        WarningMessage = string.Empty; // Clear any warning message after adding/updating
+    }
+
+    private void EditTransaction(Transactionitem transaction)
+    {
+        TransactionToEdit = transaction;
+        NewTransactionTitle = transaction.transactionTitle;
+        NewTransactionDescription = transaction.transactionDescription;
+        NewTransactionAmount = transaction.transactionAmount;
+        NewTransactionDate = transaction.transactionDate;
+        NewTransactionTag = transaction.transactionTag;
+        ShowForm = true;
+    }
+
+    private void ConfirmDelete(Transactionitem transaction)
+    {
+        if (transaction == null)
+        {
+            WarningMessage = "Transaction not found. Please try again.";
+        }
+        else
+        {
+            TransactionToDelete = transaction;
+            ShowDeleteConfirmation = true;
+            WarningMessage = string.Empty; // Clear any existing warning message before showing the confirmation
+        }
+    }
+
+    private void DeleteTransaction()
+    {
+        if (TransactionToDelete != null)
+        {
+            TransactionService.DeleteTransaction(TransactionToDelete.transactionId);
+            LoadTransactions();
+            ShowDeleteConfirmation = false;
+            TransactionToDelete = null;
+            WarningMessage = string.Empty; // Clear any warning message after deletion
+        }
+        else
+        {
+            WarningMessage = "Error: Cannot delete the transaction. Try again.";
+        }
+    }
+
+    private void CancelDelete()
+    {
+        ShowDeleteConfirmation = false;
+        TransactionToDelete = null;
+    }
+
+    private void ClearForm()
+    {
+        NewTransactionTitle = string.Empty;
+        NewTransactionDescription = string.Empty;
+        NewTransactionAmount = 0;
+        NewTransactionDate = DateTime.Now;
+        NewTransactionTag = string.Empty;
+        TransactionToEdit = null;
+        WarningMessage = string.Empty;
+    }
+}

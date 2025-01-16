@@ -1,0 +1,126 @@
+﻿@page "/debt"
+@using PersonalExpenseTracker.Models
+
+<h1>Debts</h1>
+
+<!-- Button to Toggle the Add Debt Form -->
+<button @onclick="ToggleFormVisibility" class="btn btn-primary mb-3">
+    Add Debt
+</button>
+
+<!-- Modal for Add Debt -->
+@if (ShowForm)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Debt</h5>
+                    <button type="button" class="btn-close" @onclick="ToggleFormVisibility"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="Source" class="form-label">Source</label>
+                        <input id="Source" @bind="NewSource" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input id="amount" @bind="NewDebtAmount" type="number" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dueDate" class="form-label">Due Date</label>
+                        <input id="dueDate" @bind="NewDueDate" type="date" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="debtTakenDate" class="form-label">Debt Taken Date</label>
+                        <input id="debtTakenDate" @bind="NewDebtTakenDate" type="date" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="AddDebt" class="btn btn-primary">Add Debt</button>
+                    <button type="button" class="btn btn-secondary" @onclick="ToggleFormVisibility">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Debt Table -->
+<table class="table table-striped mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>Source</th>
+            <th>Amount</th>
+            <th>Due Date</th>
+            <th>Debt Taken Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var debt in Debts)
+        {
+            <tr>
+                <td>@debt.DebtSource</td>
+                <td>@debt.DebtAmount</td>
+                <td>@debt.DebtDueDate.ToShortDateString()</td>
+                <td>@debt.DebtTakenDate.ToShortDateString()</td>
+                <td>@debt.Status</td>
+                <td>
+                    <button @onclick="() => EditDebt(debt)" class="btn btn-success btn-sm">Edit</button>
+                    <button @onclick="() => DeleteDebt(debt)" class="btn btn-danger btn-sm">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Debtitem> Debts = new();
+    private string NewSource = string.Empty;
+    private decimal NewDebtAmount;
+    private DateTime NewDueDate = DateTime.Now;
+    private DateTime NewDebtTakenDate = DateTime.Now;
+    private bool ShowForm = false;
+
+    private void ToggleFormVisibility()
+    {
+        ShowForm = !ShowForm;
+        ClearForm();
+    }
+
+    private void AddDebt()
+    {
+        Debts.Add(new Debtitem
+            {
+                DebtId = Debts.Count + 1,
+                DebtSource = NewSource,
+                DebtAmount = NewDebtAmount,
+                DebtDueDate = NewDueDate,
+                DebtTakenDate = NewDebtTakenDate,
+                Status = "Pending"
+            });
+
+        ClearForm();
+        ShowForm = false;
+    }
+
+    private void EditDebt(Debtitem debt)
+    {
+        // Logic for editing the debt
+    }
+
+    private void DeleteDebt(Debtitem debt)
+    {
+        Debts.Remove(debt);
+    }
+
+    private void ClearForm()
+    {
+        NewSource = string.Empty;
+        NewDebtAmount = 0;
+        NewDueDate = DateTime.Now;
+        NewDebtTakenDate = DateTime.Now;
+    }
+}
+

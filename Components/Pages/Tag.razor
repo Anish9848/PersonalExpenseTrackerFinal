@@ -1,0 +1,187 @@
+﻿@page "/tag"
+@using PersonalExpenseTracker.Models
+@inject PersonalExpenseTracker.Services.TagService TagService
+
+<h1 class="mb-4">Tags</h1>
+
+<!-- Button to Toggle the Add Tag Form, Positioned at the Bottom Right -->
+<button @onclick="ToggleFormVisibility" class="btn btn-primary add-tag-button position-fixed bottom-0 end-0 m-3">
+    Add Tag
+</button>
+
+<!-- Modal for Add Tag -->
+@if (ShowForm)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@((TagToEdit == null) ? "Add Tag" : "Edit Tag")</h5>
+                    <button type="button" class="btn-close" @onclick="ToggleFormVisibility"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="tagNameInput" class="form-label">Tag Name</label>
+                        <input id="tagNameInput" @bind="NewTagName" placeholder="Enter tag name" class="form-control" />
+                    </div>
+
+                    <!-- Warning Message for Empty Input -->
+                    @if (IsTagNameEmpty)
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            Tag name cannot be empty.
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="AddOrUpdateTag" class="btn btn-primary">@((TagToEdit == null) ? "Add Tag" : "Update Tag")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="ToggleFormVisibility">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Confirmation Modal for Deleting Tag -->
+@if (ShowDeleteConfirmation)
+{
+    <div class="modal show d-block" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the tag "<strong>@TagToDelete?.TagName</strong>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="DeleteTag" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Tag Table -->
+<table class="table table-bordered table-striped mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>S.No.</th>
+            <th>Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tag in Tags.Select((tag, index) => new { tag, index }))
+        {
+            <tr>
+                <td>@(tag.index + 1)</td>
+                <td>@tag.tag.TagName</td>
+                <td>
+                    <button @onclick="() => EditTag(tag.tag)" class="btn btn-sm btn-success me-2">Edit</button>
+                    <button @onclick="() => ConfirmDelete(tag.tag)" class="btn btn-sm btn-danger">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private string NewTagName = string.Empty;
+    private bool ShowForm = false; // Flag to control form visibility
+    private bool ShowDeleteConfirmation = false; // Flag for delete confirmation modal
+    private Tagitem? TagToEdit;
+    private Tagitem? TagToDelete; // Tag selected for deletion
+    private List<Tagitem> Tags = new();
+    private bool IsTagNameEmpty = false; // Flag to check if tag name is empty
+
+    protected override void OnInitialized()
+    {
+        LoadTags();
+    }
+
+    private void ToggleFormVisibility()
+    {
+        ShowForm = !ShowForm; // Toggle the form visibility
+        if (!ShowForm)
+        {
+            ClearForm();
+            IsTagNameEmpty = false; // Reset the warning message
+        }
+    }
+
+    private void LoadTags()
+    {
+        Tags = TagService.GetTags();
+    }
+
+    private void AddOrUpdateTag()
+    {
+        if (string.IsNullOrEmpty(NewTagName))
+        {
+            IsTagNameEmpty = true; // Set the flag to show warning if tag name is empty
+            return; // Do not proceed if the tag name is empty
+        }
+
+        IsTagNameEmpty = false; // Reset the warning message flag
+
+        if (TagToEdit == null)
+        {
+            // Add a new tag
+            TagService.AddTag(new Tagitem
+                {
+                    TagName = NewTagName
+                });
+        }
+        else
+        {
+            // Update existing tag
+            TagToEdit.TagName = NewTagName;
+            TagService.UpdateTag(TagToEdit);
+            TagToEdit = null;
+        }
+
+        LoadTags();
+        ClearForm();
+        ShowForm = false; // Hide the form after adding/updating
+    }
+
+    private void EditTag(Tagitem tag)
+    {
+        TagToEdit = tag;
+        NewTagName = tag.TagName;
+        ShowForm = true;
+        IsTagNameEmpty = false; // Reset the warning message
+    }
+
+    private void ConfirmDelete(Tagitem tag)
+    {
+        TagToDelete = tag; // Set the tag to delete
+        ShowDeleteConfirmation = true; // Show the confirmation modal
+    }
+
+    private void DeleteTag()
+    {
+        if (TagToDelete != null)
+        {
+            TagService.DeleteTag(TagToDelete.TagId);
+            LoadTags();
+            ShowDeleteConfirmation = false; // Close the confirmation modal
+            TagToDelete = null; // Reset the tag to delete
+        }
+    }
+
+    private void CancelDelete()
+    {
+        ShowDeleteConfirmation = false; // Close the confirmation modal without deleting
+        TagToDelete = null; // Reset the tag to delete
+    }
+
+    private void ClearForm()
+    {
+        NewTagName = string.Empty;
+        TagToEdit = null;
+    }
+}
