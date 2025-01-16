@@ -5,6 +5,13 @@
 
 <h1>Transactions</h1>
 
+<!-- Income Box -->
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <span>Total Income: @TotalIncome</span>
+    <span>Total Expense: @TotalExpense</span>
+    <span>Remaining Balance: @RemainingBalance</span>
+</div>
+
 <!-- Filter and Search Inputs -->
 <div class="d-flex justify-content-end mb-3">
     <div class="me-3">
@@ -201,11 +208,15 @@
     private string FilterType = string.Empty;
     private string FilterTag = string.Empty;
     private string SearchTitle = string.Empty;
+    private decimal TotalIncome = 0;
+    private decimal TotalExpense = 0;
+    private decimal RemainingBalance = 0;
 
     protected override void OnInitialized()
     {
         LoadTransactions();
         LoadTags();
+        CalculateTotals();
     }
 
     private void ToggleFormVisibility()
@@ -226,6 +237,7 @@
     {
         Transactions = TransactionService.GetTransactions();
         FilteredTransactions = Transactions; // Initialize FilteredTransactions
+        CalculateTotals();
     }
 
     private void LoadTags()
@@ -239,6 +251,12 @@
         if (string.IsNullOrEmpty(NewTransactionTitle) || string.IsNullOrEmpty(NewTransactionDescription) || NewTransactionAmount <= 0 || string.IsNullOrEmpty(NewTransactionTag) || string.IsNullOrEmpty(NewTransactionType))
         {
             WarningMessage = "Please fill in all fields!";
+            return;
+        }
+
+        if (NewTransactionType == "Expense" && NewTransactionAmount > RemainingBalance)
+        {
+            WarningMessage = "Amount is greater than the remaining balance!";
             return;
         }
 
@@ -362,5 +380,12 @@
         {
             FilteredTransactions = Transactions;
         }
+    }
+
+    private void CalculateTotals()
+    {
+        TotalIncome = Transactions.Where(t => t.transactionType == "Income").Sum(t => t.transactionAmount);
+        TotalExpense = Transactions.Where(t => t.transactionType == "Expense").Sum(t => t.transactionAmount);
+        RemainingBalance = TotalIncome - TotalExpense;
     }
 }
