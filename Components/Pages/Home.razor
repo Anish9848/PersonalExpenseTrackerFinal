@@ -40,9 +40,9 @@
 
 <!-- Income, Expense & Debt Chart -->
 <div class="col-md-6">
-    <div class="dashboard-card bg-blue text-white text-center">
+    <div class="dashboard-card text-white text-center">
         <h3>Income, Expense & Debt Chart</h3>
-        <MudPaper Class="pa-4">
+        <MudPaper Class="pa-4" Style="background-color: blue; color: white;">
             <MudChart ChartType="ChartType.Pie" InputData="@chartData" InputLabels="@chartLabels" Width="300px" Height="300px" />
         </MudPaper>
     </div>
@@ -63,7 +63,7 @@
     private decimal LowestDebt = 0;
 
     private double[] chartData;
-    private string[] chartLabels = { "Income", "Expense", "Total Debt" };
+    private string[] chartLabels = { "Total Income", "Total Expense", "Total Debt" };
 
     protected override void OnInitialized()
     {
