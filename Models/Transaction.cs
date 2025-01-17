@@ -9,7 +9,7 @@ namespace PersonalExpenseTracker.Models
     public class Transactionitem
     {
         public int transactionId { get; set; }
-        public string transactionTitle { get; set; }  // Add Title
+        public string transactionTitle { get; set; } 
         public string transactionDescription { get; set; }
         public decimal transactionAmount { get; set; }
         public DateTime transactionDate { get; set; }

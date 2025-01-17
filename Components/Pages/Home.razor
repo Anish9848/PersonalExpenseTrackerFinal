@@ -46,46 +46,58 @@
 </div>
 
 @code {
-    private decimal TotalIncome = 0;
-    private decimal TotalExpense = 0;
-    private decimal RemainingBalance = 0;
-    private decimal HighestIncome = 0;
-    private decimal LowestIncome = 0;
-    private decimal HighestExpense = 0;
-    private decimal LowestExpense = 0;
-    private decimal TotalDebt = 0;
-    private decimal ClearedDebt = 0;
-    private decimal RemainingDebt = 0;
-    private decimal HighestDebt = 0;
-    private decimal LowestDebt = 0;
+    // Properties for financial summaries
+    private decimal TotalIncome = 0;        // Total income
+    private decimal TotalExpense = 0;       // Total expenses
+    private decimal RemainingBalance = 0;   // Remaining balance
+    private decimal HighestIncome = 0;      // Highest income amount
+    private decimal LowestIncome = 0;       // Lowest income amount
+    private decimal HighestExpense = 0;     // Highest expense amount
+    private decimal LowestExpense = 0;      // Lowest expense amount
 
-    private double[] chartData;
-    private string[] chartLabels = { "Total Income", "Total Expense", "Total Debt" };
+    // Properties for debt summaries
+    private decimal TotalDebt = 0;          // Total debt
+    private decimal ClearedDebt = 0;        // Total cleared debt
+    private decimal RemainingDebt = 0;      // Remaining debt
+    private decimal HighestDebt = 0;        // Highest debt amount
+    private decimal LowestDebt = 0;         // Lowest debt amount
 
+    // Chart data and labels
+    private double[] chartData;             // Data to be used in the chart
+    private string[] chartLabels = { "Total Income", "Total Expense", "Total Debt" }; // Labels for the chart
+
+    // Called during component initialization
     protected override void OnInitialized()
     {
-        LoadTransactions();
-        LoadDebts();
+        LoadTransactions();  // Load and calculate transaction totals
+        LoadDebts();         // Load and calculate debt totals
     }
 
+    // Load transactions from the service and calculate totals
     private void LoadTransactions()
     {
-        var transactions = TransactionService.GetTransactions();
-        CalculateTransactionTotals(transactions);
+        var transactions = TransactionService.GetTransactions();  // Fetch transactions
+        CalculateTransactionTotals(transactions);                // Calculate totals
     }
 
+    // Load debts from the service and calculate totals
     private void LoadDebts()
     {
-        var debts = DebtService.GetDebts();
-        CalculateDebtTotals(debts);
+        var debts = DebtService.GetDebts();  // Fetch debts
+        CalculateDebtTotals(debts);         // Calculate totals
     }
 
+    // Calculate totals for transactions
     private void CalculateTransactionTotals(List<Transactionitem> transactions)
     {
+        // Calculate total income and total expenses
         TotalIncome = transactions.Where(t => t.transactionType == "Income").Sum(t => t.transactionAmount);
         TotalExpense = transactions.Where(t => t.transactionType == "Expense").Sum(t => t.transactionAmount);
+
+        // Calculate remaining balance
         RemainingBalance = TotalIncome - TotalExpense;
 
+        // Determine highest and lowest income amounts
         var incomes = transactions.Where(t => t.transactionType == "Income").Select(t => t.transactionAmount).ToList();
         if (incomes.Any())
         {
@@ -93,6 +105,7 @@
             LowestIncome = incomes.Min();
         }
 
+        // Determine highest and lowest expense amounts
         var expenses = transactions.Where(t => t.transactionType == "Expense").Select(t => t.transactionAmount).ToList();
         if (expenses.Any())
         {
@@ -100,15 +113,21 @@
             LowestExpense = expenses.Min();
         }
 
+        // Update chart data to reflect the current totals
         UpdateChartData();
     }
 
+    // Calculate totals for debts
     private void CalculateDebtTotals(List<Debtitem> debts)
     {
+        // Calculate total debt and cleared debt
         TotalDebt = debts.Sum(d => d.DebtAmount);
         ClearedDebt = debts.Where(d => d.Status == "Paid").Sum(d => d.DebtAmount);
+
+        // Calculate remaining debt
         RemainingDebt = TotalDebt - ClearedDebt;
 
+        // Determine highest and lowest debt amounts
         var debtAmounts = debts.Select(d => d.DebtAmount).ToList();
         if (debtAmounts.Any())
         {
@@ -116,9 +135,11 @@
             LowestDebt = debtAmounts.Min();
         }
 
+        // Update chart data to reflect the current totals
         UpdateChartData();
     }
 
+    // Update the chart data with the current financial summaries
     private void UpdateChartData()
     {
         chartData = new double[] { (double)TotalIncome, (double)TotalExpense, (double)TotalDebt };
